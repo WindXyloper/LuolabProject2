@@ -19,130 +19,129 @@ def process_data(raw_dir="cresci-2015", processed_dir="processed_data"):
     num_nodes = len(nodes)
 
     # # ================== 处理边数据 ==================
-    # print("Processing edges...")
-    # edges_df = pd.read_csv(f"{raw_dir}/edge.csv")
-    # valid_edges = edges_df[edges_df['relation'].isin(['follow', 'friend'])]
+    print("Processing edges...")
+    edges_df = pd.read_csv(f"{raw_dir}/edge.csv")
+    valid_edges = edges_df[edges_df['relation'].isin(['follow', 'friend'])]
 
-    # edge_index, edge_type = [], []
-    # for _, row in valid_edges.iterrows():
-    #     src, rel, tgt = row['source_id'], row['relation'], row['target_id']
-    #     if src not in id_to_idx or tgt not in id_to_idx:
-    #         continue
-    #     src_idx, tgt_idx = id_to_idx[src], id_to_idx[tgt]
+    edge_index, edge_type = [], []
+    for _, row in valid_edges.iterrows():
+        src, rel, tgt = row['source_id'], row['relation'], row['target_id']
+        if src not in id_to_idx or tgt not in id_to_idx:
+            continue
+        src_idx, tgt_idx = id_to_idx[src], id_to_idx[tgt]
         
-    #     if rel == 'follow':
-    #         edge_index.append([src_idx, tgt_idx])
-    #         edge_type.append(0)
-    #     elif rel == 'friend':
-    #         edge_index.extend([[src_idx, tgt_idx], [tgt_idx, src_idx]])
-    #         edge_type.extend([1, 1])
+        if rel == 'follow':
+            edge_index.append([src_idx, tgt_idx])
+            edge_type.append(0)
+        elif rel == 'friend':
+            edge_index.extend([[src_idx, tgt_idx], [tgt_idx, src_idx]])
+            edge_type.extend([1, 1])
 
-    # edge_index_tensor = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
-    # edge_type_tensor = torch.tensor(edge_type, dtype=torch.long)
-    # torch.save(edge_index_tensor, f"{processed_dir}/edge_index.pt")
-    # torch.save(edge_type_tensor, f"{processed_dir}/edge_type.pt")
+    edge_index_tensor = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+    edge_type_tensor = torch.tensor(edge_type, dtype=torch.long)
+    torch.save(edge_index_tensor, f"{processed_dir}/edge_index.pt")
+    torch.save(edge_type_tensor, f"{processed_dir}/edge_type.pt")
     
-    # # ================== 处理数据集划分 ==================
-    # print("Processing splits...")
-    # split_df = pd.read_csv(f"{raw_dir}/split.csv")
-    # split_df['index'] = split_df['id'].map(id_to_idx).dropna().astype(int)
+    # ================== 处理数据集划分 ==================
+    print("Processing splits...")
+    split_df = pd.read_csv(f"{raw_dir}/split.csv")
+    split_df['index'] = split_df['id'].map(id_to_idx).dropna().astype(int)
 
-    # for split in ['train', 'val', 'test']:
-    #     indices = split_df[split_df['split'] == split]['index'].tolist()
-    #     torch.save(torch.tensor(indices, dtype=torch.long), 
-    #               f"{processed_dir}/{split}_index.pt")
+    for split in ['train', 'val', 'test']:
+        indices = split_df[split_df['split'] == split]['index'].tolist()
+        torch.save(torch.tensor(indices, dtype=torch.long), 
+                  f"{processed_dir}/{split}_index.pt")
 
-    # # ================== 处理标签 ==================
-    # print("Processing labels...")
-    # label_df = pd.read_csv(f"{raw_dir}/label.csv")
-    # label_df['index'] = label_df['id'].map(id_to_idx).dropna()
-    # label_df = label_df.sort_values('index').dropna()
+    # ================== 处理标签 ==================
+    print("Processing labels...")
+    label_df = pd.read_csv(f"{raw_dir}/label.csv")
+    label_df['index'] = label_df['id'].map(id_to_idx).dropna()
+    label_df = label_df.sort_values('index').dropna()
     
-    # # 保存为CSV和Tensor双格式
-    # label_df[['id', 'label']].to_csv(f"{processed_dir}/label.csv", index=False)
-    # labels = label_df['label'].map({'human': 0, 'bot': 1}).values
-    # torch.save(torch.tensor(labels, dtype=torch.long), f"{processed_dir}/label.pt")
+    # 保存为CSV和Tensor双格式
+    label_df[['id', 'label']].to_csv(f"{processed_dir}/label.csv", index=False)
+    labels = label_df['label'].map({'human': 0, 'bot': 1}).values
+    torch.save(torch.tensor(labels, dtype=torch.long), f"{processed_dir}/label.pt")
 
-    # print(f"Processing complete! Output saved to {processed_dir}")
+    print(f"Processing complete! Output saved to {processed_dir}")
 
-    # # ================== 处理特征 ==================
-    # print("Processing features...")
-    # roberta_path = r"C:\Users\30446\.cache\huggingface\hub\models--roberta-base\snapshots\e2da8e2f811d1448a5b465c236feacd80ffbac7b"
-    # # 初始化RoBERTa模型
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # tokenizer = RobertaTokenizer.from_pretrained('roberta_path')
-    # model = RobertaModel.from_pretrained('roberta_path').to(device)
-    # model.eval()
+    # ================== 处理特征 ==================
+    print("Processing features...")
+    # 初始化RoBERTa模型
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    tokenizer = RobertaTokenizer.from_pretrained('roberta_path')   #可能会有错误。
+    model = RobertaModel.from_pretrained('roberta_path').to(device)
+    model.eval()
 
-    # # ------------------ 处理描述特征 ------------------
-    # print("Processing description features...")
+    # ------------------ 处理描述特征 ------------------
+    print("Processing description features...")
 
-    # def encode_description(text):
-    #     inputs = tokenizer(
-    #         text, 
-    #         return_tensors="pt",
-    #         max_length=128,          # 限制最大长度
-    #         truncation=True,
-    #         padding="max_length"     # 填充到固定长度
-    #     ).to(device)
-    #     with torch.no_grad():
-    #         outputs = model(**inputs)
-    #     return outputs.last_hidden_state.mean(dim=1).squeeze().cpu()
+    def encode_description(text):
+        inputs = tokenizer(
+            text, 
+            return_tensors="pt",
+            max_length=128,          # 限制最大长度
+            truncation=True,
+            padding="max_length"     # 填充到固定长度
+        ).to(device)
+        with torch.no_grad():
+            outputs = model(**inputs)
+        return outputs.last_hidden_state.mean(dim=1).squeeze().cpu()
 
-    # # 分批处理（关键修改）
-    # batch_size = 32768  # 根据可用内存调整
-    # des_tensors = []
+    # 分批处理（关键修改）
+    batch_size = 32768  # 根据可用内存调整
+    des_tensors = []
 
-    # for i in range(0, len(nodes), batch_size):
-    #     batch = nodes[i:i+batch_size]
-    #     batch_des = [str(node.get('description', '')) for node in batch]
+    for i in range(0, len(nodes), batch_size):
+        batch = nodes[i:i+batch_size]
+        batch_des = [str(node.get('description', '')) for node in batch]
         
-    #     # 编码并立即释放资源
-    #     batch_tensor = torch.stack([encode_description(desc) for desc in batch_des])
-    #     des_tensors.append(batch_tensor)
+        # 编码并立即释放资源
+        batch_tensor = torch.stack([encode_description(desc) for desc in batch_des])
+        des_tensors.append(batch_tensor)
         
-    #     # 显式释放内存
-    #     del batch, batch_des, batch_tensor
-    #     if torch.cuda.is_available():
-    #         torch.cuda.empty_cache()
-    #     print(f"Processed {min(i+batch_size, len(nodes))}/{len(nodes)}")
+        # 显式释放内存
+        del batch, batch_des, batch_tensor
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        print(f"Processed {min(i+batch_size, len(nodes))}/{len(nodes)}")
 
-    # # 合并并保存
-    # des_tensor = torch.cat(des_tensors, dim=0)
-    # torch.save(des_tensor, f"{processed_dir}/des_tensor.pt")
+    # 合并并保存
+    des_tensor = torch.cat(des_tensors, dim=0)
+    torch.save(des_tensor, f"{processed_dir}/des_tensor.pt")
 
-    # # ------------------ 处理推文特征 ------------------
-    # print("Processing tweet features...")
+    # ------------------ 处理推文特征 ------------------
+    print("Processing tweet features...")
 
-    # with open(f"{raw_dir}/id_tweet.json", "r") as f:
-    #     tweets_data = json.load(f)
+    with open(f"{raw_dir}/id_tweet.json", "r") as f:
+        tweets_data = json.load(f)
 
-    # tweet_embeddings = []
-    # for idx in range(num_nodes):
-    #     user_tweets = tweets_data.get(str(idx), [])
+    tweet_embeddings = []
+    for idx in range(num_nodes):
+        user_tweets = tweets_data.get(str(idx), [])
         
-    #     if len(user_tweets) == 0:
-    #         avg_embedding = torch.zeros(768)
-    #     else:
-    #         embeddings = []
-    #         for tweet in user_tweets:
-    #             if not str(tweet).strip():
-    #                 embeddings.append(torch.zeros(768))
-    #                 continue
+        if len(user_tweets) == 0:
+            avg_embedding = torch.zeros(768)
+        else:
+            embeddings = []
+            for tweet in user_tweets:
+                if not str(tweet).strip():
+                    embeddings.append(torch.zeros(768))
+                    continue
                 
-    #             inputs = tokenizer(str(tweet), return_tensors="pt",
-    #                             max_length=128, truncation=True,
-    #                             padding='max_length').to(device)
-    #             with torch.no_grad():
-    #                 outputs = model(**inputs)
-    #             embeddings.append(outputs.last_hidden_state.mean(dim=1).squeeze().cpu())
+                inputs = tokenizer(str(tweet), return_tensors="pt",
+                                max_length=128, truncation=True,
+                                padding='max_length').to(device)
+                with torch.no_grad():
+                    outputs = model(**inputs)
+                embeddings.append(outputs.last_hidden_state.mean(dim=1).squeeze().cpu())
             
-    #         avg_embedding = torch.mean(torch.stack(embeddings), dim=0) if embeddings else torch.zeros(768)
+            avg_embedding = torch.mean(torch.stack(embeddings), dim=0) if embeddings else torch.zeros(768)
         
-    #     tweet_embeddings.append(avg_embedding)
+        tweet_embeddings.append(avg_embedding)
 
-    # tweets_tensor = torch.stack(tweet_embeddings)
-    # torch.save(tweets_tensor, f"{processed_dir}/tweets_tensor.pt")
+    tweets_tensor = torch.stack(tweet_embeddings)
+    torch.save(tweets_tensor, f"{processed_dir}/tweets_tensor.pt")
 
     # ------------------ 处理数值特征 ------------------
     print("Processing numerical features...")
