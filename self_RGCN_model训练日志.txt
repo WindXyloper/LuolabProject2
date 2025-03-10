@@ -1,0 +1,19 @@
+=== Enhanced Data Validation ===
+Confirmed nodes: 2833058
+Edge index range: [0, 5299]
+Training Optimized Model:
+Initial GPU Memory: 8419.69 MB
+Epoch 001 | Loss: 2.1880 | Val Acc: 0.7363 | Val F1: 0.7096
+Epoch 002 | Loss: 2.3556 | Val Acc: 0.7363 | Val F1: 0.7096
+Epoch 003 | Loss: 2.3373 | Val Acc: 0.7363 | Val F1: 0.7096
+Epoch 004 | Loss: 2.3372 | Val Acc: 0.7363 | Val F1: 0.7096
+Epoch 005 | Loss: 1.6941 | Val Acc: 0.7363 | Val F1: 0.7096
+Epoch 006 | Loss: 1.3313 | Val Acc: 0.7552 | Val F1: 0.7268
+Epoch 007 | Loss: 1.1946 | Val Acc: 0.7628 | Val F1: 0.7334
+Epoch 008 | Loss: 0.9999 | Val Acc: 0.7703 | Val F1: 0.7404
+Epoch 009 | Loss: 0.9416 | Val Acc: 0.7713 | Val F1: 0.7413
+Epoch 010 | Loss: 0.8751 | Val Acc: 0.7713 | Val F1: 0.7409
+Epoch 011 | Loss: 0.7640 | Val Acc: 0.7722 | Val F1: 0.7418
+Epoch 012 | Loss: 0.7301 | Val Acc: 0.7741 | Val F1: 0.7436
+Early stopping at epoch 12
+Final Test | Acc: 0.7738 | F1: 0.7308
