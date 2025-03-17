@@ -6,7 +6,6 @@ from torch_geometric.nn import RGCNConv
 from sklearn.metrics import f1_score
 
 class BotRGCN(nn.Module):
-    """完整实现论文架构，使用PyG官方RGCNConv"""
     def __init__(self, 
                  des_dim=768, 
                  tweet_dim=768, 
@@ -29,19 +28,16 @@ class BotRGCN(nn.Module):
         self.use_num = use_num
         self.use_cat = use_cat
         
-        # 特征投影层（公式(1)）
         self.des_proj = nn.Linear(des_dim, hidden_dim)
         self.tweet_proj = nn.Linear(tweet_dim, hidden_dim)
         self.num_proj = nn.Linear(num_dim, hidden_dim)
         self.cat_proj = nn.Linear(cat_dim, hidden_dim)
         
-        # 多层RGCN（公式(2)）
         self.rgcns = nn.ModuleList([
             RGCNConv(hidden_dim, hidden_dim, num_relations=num_relations, num_bases=None)
             for _ in range(num_layers)
         ])
         
-        # MLP分类器（公式(3)）
         self.mlp = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
@@ -51,7 +47,7 @@ class BotRGCN(nn.Module):
         
         self.dropout = dropout
 
-    def forward(self, data):
+    def forward(self, data):    #！！！！
         x = 0
         if self.use_des:
             h_des = F.leaky_relu(self.des_proj(data.des))
@@ -66,22 +62,18 @@ class BotRGCN(nn.Module):
             h_cat = F.leaky_relu(self.cat_proj(data.cat))
             x += h_cat
         
-        # 多层RGCN
         for rgcn in self.rgcns:
             x = F.leaky_relu(rgcn(x, data.edge_index, data.edge_type))
             x = F.dropout(x, p=self.dropout, training=self.training)
         
-        # 最终分类
         return self.mlp(x)
 
 class BotDetector:
-    """完整训练管道"""
     def __init__(self, processed_dir='processed_data'):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.data = self.load_data(processed_dir).to(self.device)
         
     def load_data(self, dir_path):
-        """加载预处理数据"""
         return Data(
             des=torch.load(f"{dir_path}/des_tensor.pt"),
             tweets=torch.load(f"{dir_path}/tweets_tensor.pt"),
@@ -130,8 +122,8 @@ class BotDetector:
         
         # 加载最佳模型
         model.load_state_dict(torch.load('best_model.pth'))
-        test_acc, test_f1 = self.evaluate(model, 'test')  # 解包元组
-        print(f'Final Test Accuracy: {test_acc:.4f} | Test F1: {test_f1:.4f}')  # 同时打印两个指标
+        test_acc, test_f1 = self.evaluate(model, 'test') 
+        print(f'Final Test Accuracy: {test_acc:.4f} | Test F1: {test_f1:.4f}') 
     
     def evaluate(self, model, split='test'):
         model.eval()
@@ -143,14 +135,11 @@ class BotDetector:
             y_pred = pred[mask].cpu()
             acc = (y_pred == y_true).sum().item() / mask.size(0)
             f1 = f1_score(y_true, y_pred, average='macro')
-            return acc, f1  # 返回准确率和F1分数
+            return acc, f1 
 
-# 实验配置
 def main():
-    # 初始化检测器
     detector = BotDetector()
     
-    # 原始模型
     print("Training Original BotRGCN:")
     model = BotRGCN(num_layers=2).to(detector.device)
     detector.train(model)

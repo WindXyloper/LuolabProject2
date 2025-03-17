@@ -6,7 +6,6 @@ from torch_geometric.nn import MessagePassing
 from sklearn.metrics import f1_score
 
 class SimpleRGCNConv(MessagePassing):
-    """内存安全的RGCN实现"""
     def __init__(self, in_channels, out_channels, num_relations):
         super().__init__(aggr='mean')
         self.num_relations = num_relations
@@ -21,7 +20,6 @@ class SimpleRGCNConv(MessagePassing):
         nn.init.kaiming_normal_(self.weight, mode='fan_out', nonlinearity='leaky_relu')
 
     def forward(self, x, edge_index, edge_type):
-        # 分关系类型处理避免内存爆炸
         out = torch.zeros(x.size(0), self.weight.size(0), self.weight.size(2), 
                          device=x.device)
         
